@@ -17,13 +17,6 @@ import jax
 import jax.numpy as jnp
 import numpy as onp
 
-def egrad(g):
-  def wrapped(x, *rest):
-    y, g_vjp = jax.vjp(lambda x: g(x, *rest), x)
-    x_bar, = g_vjp(jnp.ones_like(y))
-    return x_bar
-  return wrapped
-
 
 def _j_0(r: jnp.ndarray) -> jnp.ndarray:
     """Order-0 spherical Bessel function of the first kind.
@@ -122,8 +115,8 @@ def create_j_l(order: int,
         orders, derivatives = [], []
         orders.append(_j_1(r))
         orders.append(_j_0(r))
-        derivatives.append(egrad(_j_0)(r))
-        derivatives.append(egrad(_j_1)(r))
+        derivatives.append(jnp.vectorize(jax.grad(_j_0))(r))
+        derivatives.append(jnp.vectorize(jax.grad(_j_1))(r))
 
         # TODO: replace with jax.lax.scan operation
         for i in range(order - 1):
