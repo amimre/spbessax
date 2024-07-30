@@ -17,6 +17,13 @@ import jax
 import jax.numpy as jnp
 import numpy as onp
 
+def egrad(g):
+  def wrapped(x, *rest):
+    y, g_vjp = jax.vjp(lambda x: g(x, *rest), x)
+    x_bar, = g_vjp(jnp.ones_like(y))
+    return x_bar
+  return wrapped
+
 
 def _j_0(r: jnp.ndarray) -> jnp.ndarray:
     """Order-0 spherical Bessel function of the first kind.
@@ -69,7 +76,9 @@ def _calc_starting_order_Cai(order: int, r):
     return min(lower_bound, upper_bound)
 
 
-def create_j_l(order: int, dtype: onp.dtype = onp.float32):
+def create_j_l(order: int,
+               output_all: bool = False,
+               dtype: onp.dtype = onp.float32):
     """Generate the l-th spherical Bessel function of the first kind.
 
     This implementation is only intended for real arguments, and the focus is
@@ -95,7 +104,7 @@ def create_j_l(order: int, dtype: onp.dtype = onp.float32):
     elif order == 0:
         return _j_0
     elif order == 1:
-        return _j_1
+        return (lambda r: jnp.asarray([_j_0(r), _j_1(r)])) if output_all else _j_1
 
     def j_l_upward(r: jnp.ndarray) -> jnp.ndarray:
         """Order-l spherical Bessel function of the first kind with derivative.
@@ -110,13 +119,23 @@ def create_j_l(order: int, dtype: onp.dtype = onp.float32):
             The values of the order-l spherical Bessel function of the first
                 kind and the values of its derivative, in a tuple.
         """
-        order_0 = _j_0(r)
-        order_1 = _j_1(r)
+        orders, derivatives = [], []
+        orders.append(_j_1(r))
+        orders.append(_j_0(r))
+        derivatives.append(egrad(_j_0)(r))
+        derivatives.append(egrad(_j_1)(r))
+
+        # TODO: replace with jax.lax.scan operation
         for i in range(order - 1):
-            temp = (2 * i + 3) / r * order_1 - order_0
-            order_0, order_1 = order_1, temp
-        derivative = order_0 - (order + 1) * order_1 / r
-        return (order_1, derivative)
+            temp = (2 * i + 3) / r * orders[-1] - orders[-2]
+            orders.append(temp)
+            derivatives.append(orders[-2] - (i + 3) * orders[-1] / r)
+
+        orders = jnp.asarray(orders)
+        derivatives = jnp.asarray(derivatives)
+        if not output_all:
+            return (orders[-1], derivatives[-1])
+        return (orders, derivatives)
 
     starting_order = _calc_starting_order_Cai(order, order)
     # Cai's original prescription is 1e-305, which works for double
@@ -150,14 +169,17 @@ def create_j_l(order: int, dtype: onp.dtype = onp.float32):
             minus_1 = (2 * (starting_order - i) + 1) * temp / r - plus_1
             plus_1, temp = temp, minus_1
 
-        unnormalized = minus_1
-        unnormalized_derivative = order * unnormalized / r - plus_1
+        unnormalized, unnormalized_derivative = [], []
+        unnormalized.append(minus_1)
+        unnormalized_derivative.append(order * minus_1 / r - plus_1)
 
         # And the continue all the way to zero to recover the right
         # normalization.
         for i in range(order):
             minus_1 = (2 * (order - i) + 1) * temp / r - plus_1
             plus_1, temp = temp, minus_1
+            unnormalized.append(minus_1)
+            unnormalized_derivative.append((order-i-1) * minus_1 / r - plus_1)
 
         # Generally speaking, we use the explicit form of j_0 to obtain the
         # right normalization for our function, but close to the zeros of j_0
@@ -166,10 +188,16 @@ def create_j_l(order: int, dtype: onp.dtype = onp.float32):
         order_1 = _j_1(r)
         prefactor = jnp.where(
             jnp.fabs(order_0) >= jnp.fabs(order_1),
-            order_0 / minus_1,
-            order_1 / plus_1
+            order_0 / jnp.asarray(minus_1),
+            order_1 / jnp.asarray(plus_1)
         )
-        return (prefactor * unnormalized, prefactor * unnormalized_derivative)
+        normalized = prefactor * jnp.flip(jnp.asarray(unnormalized))
+        normalized_derivative = (prefactor *
+                                 jnp.flip(jnp.asarray(unnormalized_derivative)))
+
+        if not output_all:
+            return (normalized[-1], normalized_derivative[-1])
+        return normalized, normalized_derivative
 
     @jax.custom_jvp
     def j_l(r: jnp.ndarray) -> jnp.ndarray:
@@ -187,21 +215,21 @@ def create_j_l(order: int, dtype: onp.dtype = onp.float32):
                 kind.
         """
         r = jnp.asarray(r)
-        condition = r < order
+        condition = abs(r) < order                                              # TODO: not clear if this should be abs(r) or r.real
         return (
             condition * j_l_Cai(jnp.clip(r, a_max=order))[0] +
             (1. - condition) * j_l_upward(r)[0]
         )
 
     # Since the derivatives of the spherical Bessel functions are inexpensive
-    # to calculate, it pays off to derine a custon jvp rule for them.
+    # to calculate, it pays off to define a custom jvp rule for them.
     @j_l.defjvp
     def j_l_jvp(primals, tangents):
         r, = primals
         r_dot, = tangents
         Cai, Cai_dot = j_l_Cai(jnp.clip(r, a_max=order))
         upward, upward_dot = j_l_upward(r)
-        condition = r < order
+        condition = abs(r) < order
         primal_out = condition * Cai + (1. - condition) * upward
         tangent_out = (
             condition * Cai_dot + (1. - condition) * upward_dot
