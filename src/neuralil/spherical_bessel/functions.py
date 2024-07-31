@@ -113,8 +113,8 @@ def create_j_l(order: int,
                 kind and the values of its derivative, in a tuple.
         """
         orders, derivatives = [], []
-        orders.append(_j_1(r))
         orders.append(_j_0(r))
+        orders.append(_j_1(r))
         derivatives.append(jnp.vectorize(jax.grad(_j_0))(r))
         derivatives.append(jnp.vectorize(jax.grad(_j_1))(r))
 
