@@ -97,9 +97,9 @@ def create_j_l(order: int,
     elif order == 0:
         return _j_0
     elif order == 1:
-        return (lambda r: jnp.asarray([_j_0(r), _j_1(r)])) if output_all else _j_1
+        return (lambda r: jnp.asarray([_j_0(r), _j_1(r)]) if output_all
+                else _j_1)
 
-    @jnp.vectorize
     def j_l_upward(r: jnp.ndarray) -> jnp.ndarray:
         """Order-l spherical Bessel function of the first kind with derivative.
 
@@ -129,8 +129,7 @@ def create_j_l(order: int,
 
         orders = jnp.asarray(orders)
         derivatives = jnp.asarray(derivatives)
-        if not output_all:
-            return (orders[-1], derivatives[-1])
+
         return (orders, derivatives)
 
     starting_order = _calc_starting_order_Cai(order, order)
@@ -139,7 +138,6 @@ def create_j_l(order: int,
     # seems to work well, since smaller r require a smaller value.
     initial_prefactor = onp.finfo(dtype).eps**2
 
-    @jnp.vectorize
     def j_l_Cai(r: jnp.ndarray) -> jnp.ndarray:
         """Order-l spherical Bessel function of the first kind with derivative.
 
@@ -192,11 +190,10 @@ def create_j_l(order: int,
         normalized_derivative = (prefactor *
                                  jnp.flip(jnp.asarray(unnormalized_derivative)))
 
-        if not output_all:
-            return (normalized[-1], normalized_derivative[-1])
         return normalized, normalized_derivative
 
     @jax.custom_jvp
+    @jnp.vectorize
     def j_l(r: jnp.ndarray) -> jnp.ndarray:
         """Order-l spherical Bessel function of the first kind.
 
@@ -212,11 +209,16 @@ def create_j_l(order: int,
                 kind.
         """
         r = jnp.asarray(r)
+
+        Cai_values = j_l_Cai(jnp.clip(r, a_max=order))[0]
+        upward_l_values = j_l_upward(r)[0]
         condition = abs(r) < order                                              # TODO: not clear if this should be abs(r) or r.real
-        return (
-            condition * j_l_Cai(jnp.clip(r, a_max=order))[0] +
-            (1. - condition) * j_l_upward(r)[0]
-        )
+        selected_values = (condition * Cai_values +
+                           (1. - condition) * upward_l_values)
+
+        if not output_all:
+            return selected_values[-1]
+        return selected_values
 
     # Since the derivatives of the spherical Bessel functions are inexpensive
     # to calculate, it pays off to define a custom jvp rule for them.
@@ -231,6 +233,9 @@ def create_j_l(order: int,
         tangent_out = (
             condition * Cai_dot + (1. - condition) * upward_dot
         ) * r_dot
+
+        if not output_all:
+            return primal_out[-1], tangent_out[-1]
         return primal_out, tangent_out
 
     return j_l
