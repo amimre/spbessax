@@ -35,7 +35,6 @@ def test_create_j_l_invalid_order():
 @pytest.mark.parametrize("order", TEST_ORDERS)
 def test_create_j_l_single_order(order):
     func = create_j_l(order=order, dtype=jnp.float64, output_all=False)
-    print('HERE', func(r), flush=True)
     expected = spherical_jn(order, r)
     assert np.allclose(func(r), expected, atol=1e-8, rtol=1e-8)
 
@@ -47,5 +46,4 @@ def test_create_j_l_output_all():
         expected.append(spherical_jn(order, r))
     expected = np.array(expected).swapaxes(0, 1)
     result = func(r)
-    print(jnp.max(result-expected), jnp.nanmax(result-expected))
     assert np.allclose(func(r), expected, atol=1e-8, rtol=1e-8)
