@@ -82,6 +82,8 @@ def create_j_l(order: int,
     Args:
         order: The order of the spherical Bessel function, which cannot be
             negative.
+        output_all: Whether to return all the values of the function up to the
+            selected order or just the last one.
         dtype: A floating-point data type on which the function is intended to
            operate.
 
