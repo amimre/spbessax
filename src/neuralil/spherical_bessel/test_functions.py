@@ -1,7 +1,6 @@
 import pytest
 import jax
 import jax.numpy as jnp
-from jax import grad
 from jax import config
 config.update("jax_enable_x64", True)
 import numpy as np
@@ -66,7 +65,7 @@ def test_real_create_j_l_grad(order):
 def test_complex_create_j_l_single_order(order):
     func = create_j_l(order=order, dtype=jnp.complex128, output_all=False)
     expected = spherical_jn(order, z)
-    assert np.allclose(func(z), expected, atol=1e-8, rtol=1e-8)
+    assert np.allclose(func(z), expected, rtol=1e-8)
 
 
 def test_complex_create_j_l_output_all():
@@ -76,4 +75,12 @@ def test_complex_create_j_l_output_all():
         expected.append(spherical_jn(order, z))
     expected = np.array(expected).swapaxes(0, 1)
     result = func(z)
-    assert np.allclose(func(z), expected, atol=1e-8, rtol=1e-8)
+    assert np.allclose(func(z), expected, rtol=1e-8)
+
+
+@pytest.mark.parametrize("order", TEST_ORDERS)
+def test_complex_create_j_l_grad(order):
+    func = create_j_l(order=order, dtype=jnp.complex128, output_all=False)
+    derivative_func = jnp.vectorize(jax.grad(func, holomorphic=True))
+    expected = spherical_jn(order, z, derivative=True)
+    assert np.allclose(derivative_func(z), expected, rtol=1e-8)
