@@ -110,8 +110,8 @@ def create_j_l(order: int,
             r: The radial coordinate.
 
         Returns:
-            The values of the order-l spherical Bessel function of the first
-                kind and the values of its derivative, in a tuple.
+            The values of the spherical Bessel function of the first
+            kind and the values of its derivative up to order l, in a tuple.
         """
         orders, derivatives = [], []
         orders.append(_j_0(r))
@@ -153,8 +153,8 @@ def create_j_l(order: int,
             r: The radial coordinate.
 
         Returns:
-            The values of the order-l spherical Bessel function of the first
-                kind and the values of its derivative, in a tuple.
+            The values of the spherical Bessel function of the first
+            kind and the values of its derivative up to order l, in a tuple.
         """
         plus_1 = jnp.zeros_like(r)
         temp = initial_prefactor * r * jnp.ones_like(r)
