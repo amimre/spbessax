@@ -116,8 +116,10 @@ def create_j_l(order: int,
         orders, derivatives = [], []
         orders.append(_j_0(r))
         orders.append(_j_1(r))
-        derivatives.append(jnp.vectorize(jax.grad(_j_0))(r))
-        derivatives.append(jnp.vectorize(jax.grad(_j_1))(r))
+        derivatives.append(
+            jnp.vectorize(jax.grad(_j_0, holomorphic=jnp.iscomplexobj(dtype)))(r))
+        derivatives.append(
+            jnp.vectorize(jax.grad(_j_1, holomorphic=jnp.iscomplexobj(dtype)))(r))
 
         # TODO: replace with jax.lax.scan operation
         for i in range(order - 1):
