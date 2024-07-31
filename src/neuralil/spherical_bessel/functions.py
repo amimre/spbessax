@@ -100,8 +100,8 @@ def create_j_l(order: int,
     elif order == 0:
         return _j_0
     elif order == 1:
-        return (lambda r: jnp.asarray([_j_0(r), _j_1(r)]) if output_all
-                else _j_1)
+        return ((lambda r: jnp.asarray([_j_0(r), _j_1(r)], dtype=dtype))
+                if output_all else _j_1)
 
     def j_l_upward(r: jnp.ndarray) -> jnp.ndarray:
         """Order-l spherical Bessel function of the first kind with derivative.
