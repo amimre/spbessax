@@ -166,7 +166,7 @@ def create_j_l(order: int,
         unnormalized.append(minus_1)
         unnormalized_derivative.append(order * minus_1 / r - plus_1)
 
-        # And the continue all the way to zero to recover the right
+        # And then continue all the way to zero to recover the right
         # normalization.
         for i in range(order):
             minus_1 = (2 * (order - i) + 1) * temp / r - plus_1
