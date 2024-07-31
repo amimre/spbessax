@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from functools import partial
 
 import jax
 import jax.numpy as jnp
@@ -195,7 +196,8 @@ def create_j_l(order: int,
         return normalized, normalized_derivative
 
     @jax.custom_jvp
-    @jnp.vectorize
+    @partial(jnp.vectorize,
+             signature="()->(l)" if output_all else "()->()")
     def j_l(r: jnp.ndarray) -> jnp.ndarray:
         """Order-l spherical Bessel function of the first kind.
 
