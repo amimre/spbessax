@@ -99,6 +99,7 @@ def create_j_l(order: int,
     elif order == 1:
         return (lambda r: jnp.asarray([_j_0(r), _j_1(r)])) if output_all else _j_1
 
+    @jnp.vectorize
     def j_l_upward(r: jnp.ndarray) -> jnp.ndarray:
         """Order-l spherical Bessel function of the first kind with derivative.
 
@@ -136,6 +137,7 @@ def create_j_l(order: int,
     # seems to work well, since smaller r require a smaller value.
     initial_prefactor = onp.finfo(dtype).eps**2
 
+    @jnp.vectorize
     def j_l_Cai(r: jnp.ndarray) -> jnp.ndarray:
         """Order-l spherical Bessel function of the first kind with derivative.
 
