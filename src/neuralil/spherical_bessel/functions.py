@@ -159,8 +159,8 @@ def create_j_l(order: int,
             The values of the spherical Bessel function of the first
             kind and the values of its derivative up to order l, in a tuple.
         """
-        plus_1 = jnp.zeros_like(r)
-        temp = initial_prefactor * r * jnp.ones_like(r)
+        plus_1 = jnp.zeros_like(r, dtype=dtype)
+        temp = initial_prefactor * r * jnp.ones_like(r, dtype=dtype)
 
         # Iterate from the starting order to the desired one.
         for i in range(starting_order - order):
@@ -186,12 +186,12 @@ def create_j_l(order: int,
         order_1 = _j_1(r)
         prefactor = jnp.where(
             jnp.fabs(order_0) >= jnp.fabs(order_1),
-            order_0 / jnp.asarray(minus_1),
-            order_1 / jnp.asarray(plus_1)
+            order_0 / jnp.asarray(minus_1, dtype=dtype),
+            order_1 / jnp.asarray(plus_1, dtype=dtype)
         )
-        normalized = prefactor * jnp.flip(jnp.asarray(unnormalized))
+        normalized = prefactor * jnp.flip(jnp.asarray(unnormalized, dtype=dtype))
         normalized_derivative = (prefactor *
-                                 jnp.flip(jnp.asarray(unnormalized_derivative)))
+                                 jnp.flip(jnp.asarray(unnormalized_derivative, dtype=dtype)))
 
         return normalized, normalized_derivative
 
@@ -212,7 +212,7 @@ def create_j_l(order: int,
             The values of the order-l spherical Bessel function of the first
                 kind.
         """
-        r = jnp.asarray(r)
+        r = jnp.asarray(r, dtype=dtype)
 
         Cai_values = j_l_Cai(jnp.clip(r, a_max=order))[0]
         upward_l_values = j_l_upward(r)[0]
