@@ -1,4 +1,5 @@
 import pytest
+import jax
 import jax.numpy as jnp
 from jax import grad
 from jax import config
@@ -50,6 +51,13 @@ def test_real_create_j_l_output_all():
     expected = np.array(expected).swapaxes(0, 1)
     result = func(r)
     assert np.allclose(func(r), expected, atol=1e-8, rtol=1e-8)
+
+@pytest.mark.parametrize("order", TEST_ORDERS)
+def test_real_create_j_l_grad(order):
+    func = create_j_l(order=order, dtype=jnp.float64, output_all=False)
+    derivative_func = jnp.vectorize(jax.grad(func))
+    expected = spherical_jn(order, r, derivative=True)
+    assert np.allclose(derivative_func(r), expected, atol=1e-8, rtol=1e-8)
 
 
 ## Test for complex valued arguments
