@@ -164,6 +164,8 @@ def create_j_l(order: int,
         plus_1 = jnp.zeros_like(r, dtype=dtype)
         temp = initial_prefactor * r * jnp.ones_like(r, dtype=dtype)
 
+        #TODO: replace with jax.lax.scan operation
+
         # Iterate from the starting order to the desired one.
         for i in range(starting_order - order):
             minus_1 = (2 * (starting_order - i) + 1) * temp / r - plus_1
