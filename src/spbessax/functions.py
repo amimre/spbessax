@@ -132,7 +132,8 @@ def create_j_l(order: int,
             carry = (order_minus_1, y, i+1)
             return carry, (y, deriv)
 
-        _, computed_orders = jax.lax.scan(loop_orders, init, length=order-1)
+        _, computed_orders = jax.lax.scan(loop_orders,
+                                          init, xs=None, length=order-1)
         orders = jnp.concatenate((jnp.array([order_0, order_1]),
                                 computed_orders[0]))
         derivatives = jnp.concatenate((jnp.array([derivative_0, derivative_1]),
@@ -176,7 +177,8 @@ def create_j_l(order: int,
 
         # Iterate from the starting order to get the desired accuracy
         (plus_1, minus_1, _), calculated_orders = (
-            jax.lax.scan(iterate_orders, init, length=starting_order))
+            jax.lax.scan(iterate_orders,
+                         init, xs=None, length=starting_order))
 
         # Flip since we interated from high to low order
         unnormalized = jnp.flip(calculated_orders[0][-(order+1):])
