@@ -7,7 +7,7 @@ import numpy as np
 
 from scipy.special import spherical_jn
 
-from .functions import create_j_l, _j_0, _j_1
+from spbessax.functions import create_j_l, _j_0, _j_1
 
 MAX_TEST_ORDER = 40
 TEST_ORDERS = [i for i in range(MAX_TEST_ORDER)]
