@@ -61,6 +61,10 @@ def test_real_create_j_l_grad(order):
 
 ## Test for complex valued arguments
 
+# TODO: TESTS for complex valued arguments are not passing for orders > 18
+# This is likely because the tolerances are too tight, but it needs further
+# investigation.
+
 @pytest.mark.parametrize("order", TEST_ORDERS)
 def test_complex_create_j_l_single_order(order):
     func = create_j_l(order=order, dtype=jnp.complex128, output_all=False)
