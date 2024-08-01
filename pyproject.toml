@@ -1,0 +1,29 @@
+[build-system]
+requires = ['setuptools']
+build-backend = 'setuptools.build_meta'
+
+
+[project]
+name = 'spbessax'
+description = 'spherical Bessel functions for JAX'
+requires-python = '>=3.7'
+version = '0.1.0'
+license = {file = 'LICENSE.md'}
+readme = 'README.md'
+dependencies = [
+    'jax',
+    'numpy',
+    ]
+
+keywords = [
+    'Spherical Bessel functions',
+    'Bessel',
+    'JAX',
+    ]
+
+[project.optional-dependencies]
+dev = [
+    'pytest',
+    'scipy',
+    'matplotlib',
+    ]
