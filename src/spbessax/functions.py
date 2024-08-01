@@ -187,7 +187,7 @@ def create_j_l(order: int,
         order_0 = _j_0(r)
         order_1 = _j_1(r)
         prefactor = jnp.where(
-            jnp.fabs(order_0) >= jnp.fabs(order_1),
+            abs(order_0) >= abs(order_1),
             order_0 / jnp.asarray(minus_1, dtype=dtype),
             order_1 / jnp.asarray(plus_1, dtype=dtype)
         )
