@@ -167,24 +167,20 @@ def create_j_l(order: int,
         plus_1 = jnp.zeros_like(r, dtype=dtype)
         temp = initial_prefactor * r * jnp.ones_like(r, dtype=dtype)
 
-        #TODO: replace with jax.lax.scan operation
-
-        # Iterate from the starting order to the desired one.
-        for i in range(starting_order - order):
+        init = (plus_1, temp, 0)
+        def iterate_orders(carry, x):
+            plus_1, temp, i = carry
             minus_1 = (2 * (starting_order - i) + 1) * temp / r - plus_1
-            plus_1, temp = temp, minus_1
+            carry = (temp, minus_1, i+1)
+            return carry, (minus_1, (starting_order-i-1) * minus_1 / r - temp)
 
-        unnormalized, unnormalized_derivative = [], []
-        unnormalized.append(minus_1)
-        unnormalized_derivative.append(order * minus_1 / r - plus_1)
+        # Iterate from the starting order to get the desired accuracy
+        (plus_1, minus_1, _), calculated_orders = (
+            jax.lax.scan(iterate_orders, init, length=starting_order))
 
-        # And then continue all the way to zero to recover the right
-        # normalization.
-        for i in range(order):
-            minus_1 = (2 * (order - i) + 1) * temp / r - plus_1
-            plus_1, temp = temp, minus_1
-            unnormalized.append(minus_1)
-            unnormalized_derivative.append((order-i-1) * minus_1 / r - plus_1)
+        # Flip since we interated from high to low order
+        unnormalized = jnp.flip(calculated_orders[0][-(order+1):])
+        unnormalized_derivative = jnp.flip(calculated_orders[1][-(order+1):])
 
         # Generally speaking, we use the explicit form of j_0 to obtain the
         # right normalization for our function, but close to the zeros of j_0
@@ -196,9 +192,8 @@ def create_j_l(order: int,
             order_0 / jnp.asarray(minus_1, dtype=dtype),
             order_1 / jnp.asarray(plus_1, dtype=dtype)
         )
-        normalized = prefactor * jnp.flip(jnp.asarray(unnormalized, dtype=dtype))
-        normalized_derivative = (prefactor *
-                                 jnp.flip(jnp.asarray(unnormalized_derivative, dtype=dtype)))
+        normalized = prefactor * unnormalized
+        normalized_derivative = prefactor *unnormalized_derivative
 
         return normalized, normalized_derivative
 
