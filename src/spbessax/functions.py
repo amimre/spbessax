@@ -116,24 +116,27 @@ def create_j_l(order: int,
             The values of the spherical Bessel function of the first
             kind and the values of its derivative up to order l, in a tuple.
         """
-        orders, derivatives = [], []
-        orders.append(_j_0(r))
-        orders.append(_j_1(r))
-        derivatives.append(
-            jnp.vectorize(jax.grad(_j_0,
-                                   holomorphic=jnp.iscomplexobj(dtype)))(r))
-        derivatives.append(
-            jnp.vectorize(jax.grad(_j_1,
-                                   holomorphic=jnp.iscomplexobj(dtype)))(r))
+        order_0 = _j_0(r)
+        order_1 = _j_1(r)
 
-        # TODO: replace with jax.lax.scan operation
-        for i in range(order - 1):
-            temp = (2 * i + 3) / r * orders[-1] - orders[-2]
-            orders.append(temp)
-            derivatives.append(orders[-2] - (i + 3) * orders[-1] / r)
+        derivative_0 = jnp.vectorize(jax.grad(_j_0,
+                                    holomorphic=jnp.iscomplexobj(dtype)))(r)
+        derivative_1 = jnp.vectorize(jax.grad(_j_1,
+                                    holomorphic=jnp.iscomplexobj(dtype)))(r)
 
-        orders = jnp.asarray(orders)
-        derivatives = jnp.asarray(derivatives)
+        init = (order_0, order_1, 0)
+        def loop_orders(carry, x):
+            order_minus_2, order_minus_1, i = carry
+            y = (2 * i + 3) / r * order_minus_1 - order_minus_2
+            deriv = order_minus_1 - (i + 3) * y / r
+            carry = (order_minus_1, y, i+1)
+            return carry, (y, deriv)
+
+        _, computed_orders = jax.lax.scan(loop_orders, init, length=order-1)
+        orders = jnp.concatenate((jnp.array([order_0, order_1]),
+                                computed_orders[0]))
+        derivatives = jnp.concatenate((jnp.array([derivative_0, derivative_1]),
+                                    computed_orders[1]))
 
         return (orders, derivatives)
 
