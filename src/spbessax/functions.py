@@ -237,7 +237,7 @@ def create_j_l(order: int,
         r, = primals
         r_dot, = tangents
         r_clipped = jnp.where(abs(r) <= order, r, order)
-        Cai, Cai_dot = j_l_Cai(r_clipped=jnp.where(abs(r) <= order, r, order))
+        Cai, Cai_dot = j_l_Cai(r_clipped)
         upward, upward_dot = j_l_upward(r)
         condition = abs(r) < order                                              # TODO: not clear if this should be abs(r) or r.real
         primal_out = condition * Cai + (1. - condition) * upward
