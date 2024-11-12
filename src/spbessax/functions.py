@@ -219,7 +219,8 @@ def create_j_l(order: int,
         """
         r = jnp.asarray(r, dtype=dtype)
 
-        Cai_values = j_l_Cai(jnp.clip(r, a_max=order))[0]
+        r_clipped = jnp.where(abs(r) <= order, r, order)
+        Cai_values = j_l_Cai(r_clipped)[0]
         upward_l_values = j_l_upward(r)[0]
         condition = abs(r) < order                                              # TODO: not clear if this should be abs(r) or r.real
         selected_values = (condition * Cai_values +
@@ -235,7 +236,8 @@ def create_j_l(order: int,
     def j_l_jvp(primals, tangents):
         r, = primals
         r_dot, = tangents
-        Cai, Cai_dot = j_l_Cai(jnp.clip(r, a_max=order))
+        r_clipped = jnp.where(abs(r) <= order, r, order)
+        Cai, Cai_dot = j_l_Cai(r_clipped=jnp.where(abs(r) <= order, r, order))
         upward, upward_dot = j_l_upward(r)
         condition = abs(r) < order                                              # TODO: not clear if this should be abs(r) or r.real
         primal_out = condition * Cai + (1. - condition) * upward
