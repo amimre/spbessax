@@ -55,8 +55,9 @@ def _calc_starting_order_Cai(order: int, r):
     When the method of Computer Physics Communications 182 (2011) 664,
     doi:10.1016/j.cpc.2010.11.019 is used to calculate j_l, an starting
     order is required for the descending recurrence. The original
-    prescription works for any complex number, but this implementation
-    only works for real arguments.
+    prescription works for any complex number, but support for complex
+    numbers is not guaranteed in this implementation. However, tests show
+    correct behavior for double precision complex number up to order 18.
 
     Args:
         order: The order of the spherical Bessel function to be evaluated.
@@ -107,7 +108,7 @@ def create_j_l(order: int,
         """Order-l spherical Bessel function of the first kind with derivative.
 
         This implementation, intended for r>l, is based on ascendent recurrence
-        and adapted from SciPy itself. The condition r >= 0 is not assessed.
+        and adapted from SciPy itself. The condition |r| >= 0 is not assessed.
 
         Args:
             r: The radial coordinate.
@@ -157,7 +158,10 @@ def create_j_l(order: int,
         numbers, this implementation is intended only for use with real
         arguments in JAX-based differentiable programs. Moreover, the potential
         arguments are assumed to be bounded from above by the order of the
-        function.The condition r >= 0 is not assessed.
+        function.The condition |r| >= 0 is not assessed.
+        Our tests show correct behavior for double precision complex number up
+        to order 18, but support for complex numbers is not guaranteed
+        in this implementation.
 
         Args:
             r: The radial coordinate.
