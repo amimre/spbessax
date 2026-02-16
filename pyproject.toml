@@ -21,6 +21,10 @@ keywords = [
     'JAX',
     ]
 
+    [project.urls]
+    Source = 'https://github.com/amimre/spbessax'
+    Issues = 'https://github.com/amimre/spbessax/issues'
+
 [project.optional-dependencies]
 dev = [
     'pytest',
