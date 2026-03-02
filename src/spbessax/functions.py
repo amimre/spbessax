@@ -121,9 +121,9 @@ def create_j_l(order: int,
         order_1 = _j_1(r)
 
         derivative_0 = jnp.vectorize(jax.grad(_j_0,
-                                    holomorphic=jnp.iscomplexobj(dtype)))(r)
+                                    holomorphic=onp.issubdtype(dtype, onp.complexfloating)))(r)
         derivative_1 = jnp.vectorize(jax.grad(_j_1,
-                                    holomorphic=jnp.iscomplexobj(dtype)))(r)
+                                    holomorphic=onp.issubdtype(dtype, onp.complexfloating)))(r)
 
         init = (order_0, order_1, 0)
         def loop_orders(carry, x):
